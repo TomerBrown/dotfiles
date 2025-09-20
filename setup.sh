@@ -627,6 +627,76 @@ source_configs() {
     fi
 }
 
+# Function to print next steps and helpful information
+print_next_steps() {
+    echo -e "${BLUE}=== Next Steps & Important Information ===${NC}"
+    echo
+    
+    # Shell and environment
+    echo -e "${YELLOW}🔄 Shell & Environment:${NC}"
+    if [[ "$SHELL" != */zsh ]]; then
+        echo -e "${CYAN}  • Your shell was changed to zsh - you may need to log out and back in${NC}"
+    fi
+    echo -e "${CYAN}  • If configs weren't sourced, restart your terminal or run: ${GREEN}source ~/.zshrc${NC}"
+    echo -e "${CYAN}  • Your terminal prompt is now powered by oh-my-posh with a custom theme${NC}"
+    echo
+    
+    # Tmux and plugins
+    if command -v tmux >/dev/null 2>&1; then
+        echo -e "${YELLOW}📦 Tmux & Plugins:${NC}"
+        echo -e "${CYAN}  • Start tmux with: ${GREEN}tmux${NC}"
+        echo -e "${CYAN}  • Install tmux plugins by pressing: ${GREEN}Ctrl-B + I${NC} (prefix + I)"
+        echo -e "${CYAN}  • Tmux session management: ${GREEN}Ctrl-B + o${NC} (sessionx)"
+        echo -e "${CYAN}  • Floating terminal: ${GREEN}Ctrl-B + p${NC} (floax)"
+        echo -e "${CYAN}  • Your tmux uses the Catppuccin theme and custom key bindings${NC}"
+        echo
+    fi
+    
+    # Font information
+    echo -e "${YELLOW}🔤 Font Configuration:${NC}"
+    echo -e "${CYAN}  • JetBrains Mono font has been installed${NC}"
+    echo -e "${CYAN}  • Recommended settings: Size 13, Line spacing 1.2${NC}"
+    echo -e "${CYAN}  • Configure your terminal/IDE to use 'JetBrains Mono' font${NC}"
+    echo -e "${CYAN}  • This font provides excellent code readability and ligatures${NC}"
+    echo
+    
+    # Development tools
+    echo -e "${YELLOW}🛠️  Development Tools Available:${NC}"
+    echo -e "${CYAN}  • ${GREEN}fzf${NC} - Fuzzy finder (integrated with zsh history and file search)"
+    echo -e "${CYAN}  • ${GREEN}bat${NC} - Enhanced 'cat' with syntax highlighting"
+    echo -e "${CYAN}  • ${GREEN}zinit${NC} - Fast zsh plugin manager (auto-configured)"
+    echo -e "${CYAN}  • Enhanced zsh with auto-suggestions, syntax highlighting, and more${NC}"
+    echo
+    
+    # Configuration files
+    echo -e "${YELLOW}📝 Configuration Files:${NC}"
+    echo -e "${CYAN}  • All config files are symlinked to this dotfiles repository${NC}"
+    echo -e "${CYAN}  • Edit configs here to keep them in version control${NC}"
+    echo -e "${CYAN}  • Main configs: ~/.zshrc, ~/.tmux.conf, ~/.config/ghostty/config${NC}"
+    echo -e "${CYAN}  • oh-my-posh theme: ~/.config/oh-my-posh/base.json${NC}"
+    echo
+    
+    # Terminal application
+    if [[ -f "$HOME/.config/ghostty/config" ]]; then
+        echo -e "${YELLOW}👻 Ghostty Terminal:${NC}"
+        echo -e "${CYAN}  • Your Ghostty terminal is configured with JetBrains Mono font${NC}"
+        echo -e "${CYAN}  • Configuration will take effect when you restart Ghostty${NC}"
+        echo -e "${CYAN}  • Settings are optimized for development work${NC}"
+        echo
+    fi
+    
+    # Troubleshooting
+    echo -e "${YELLOW}🔧 Troubleshooting:${NC}"
+    echo -e "${CYAN}  • If commands aren't found, restart your terminal${NC}"
+    echo -e "${CYAN}  • If tmux plugins don't work, run tmux and press ${GREEN}Ctrl-B + I${NC}"
+    echo -e "${CYAN}  • If fonts look wrong, ensure JetBrains Mono is selected in your terminal${NC}"
+    echo -e "${CYAN}  • All configs are in: ${GREEN}$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)${NC}"
+    echo
+    
+    echo -e "${GREEN}✨ Your development environment is ready! ✨${NC}"
+    echo -e "${CYAN}Enjoy your new setup with enhanced productivity tools! 🚀${NC}"
+}
+
 # Main function
 main() {
     print_ascii_art
@@ -686,8 +756,8 @@ main() {
     echo
     
     echo -e "${GREEN}🎉 Setup complete! 🎉${NC}"
-    echo -e "${CYAN}If you didn't source the configs, restart your terminal or run 'source ~/.zshrc'${NC}"
-    echo -e "${CYAN}If you changed your default shell, you may need to log out and back in.${NC}"
+    echo
+    print_next_steps
 }
 
 # Run main function
