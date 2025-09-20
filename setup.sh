@@ -208,6 +208,12 @@ install_packages() {
     
     for package in "${packages[@]}"; do
         install_package "$package"
+        
+        # Install tpm automatically after tmux is installed
+        if [[ "$package" == "tmux" ]] && command -v tmux >/dev/null 2>&1; then
+            echo -e "${CYAN}Installing Tmux Plugin Manager (tpm) for tmux...${NC}"
+            install_tpm_silent
+        fi
     done
     
     # Special handling for oh-my-posh
@@ -233,7 +239,33 @@ install_packages() {
     install_jetbrains_font
 }
 
-# Function to install Tmux Plugin Manager (tpm)
+# Function to install Tmux Plugin Manager (tpm) - silent version for automatic installation
+install_tpm_silent() {
+    local tpm_dir="$HOME/.tmux/plugins/tpm"
+    
+    if [[ -d "$tpm_dir" ]]; then
+        echo -e "${GREEN}  ✓ Tmux Plugin Manager (tpm) is already installed${NC}"
+        return 0
+    fi
+    
+    echo -e "${YELLOW}  Installing Tmux Plugin Manager (tpm)...${NC}"
+    
+    # Create the plugins directory if it doesn't exist
+    mkdir -p "$HOME/.tmux/plugins"
+    
+    # Clone tpm repository
+    if git clone https://github.com/tmux-plugins/tpm "$tpm_dir" >/dev/null 2>&1; then
+        echo -e "${GREEN}  ✓ Successfully installed Tmux Plugin Manager (tpm)${NC}"
+        echo -e "${CYAN}  ℹ After tmux configuration is loaded, you can install plugins by pressing prefix + I (Ctrl-B + I by default)${NC}"
+    else
+        echo -e "${RED}  ✗ Failed to install Tmux Plugin Manager (tpm)${NC}"
+        echo -e "${YELLOW}  ⚠ You can install it manually by running:${NC}"
+        echo -e "${CYAN}    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm${NC}"
+        return 1
+    fi
+}
+
+# Function to install Tmux Plugin Manager (tpm) - interactive version
 install_tpm() {
     echo -e "${BLUE}=== Installing Tmux Plugin Manager (tpm) ===${NC}"
     
@@ -629,22 +661,14 @@ main() {
     echo
     
     # Step 3: Install packages
-    if ask_yes_no "Do you want to install required packages (tmux, fzf, bat, oh-my-posh, JetBrains Mono font)?"; then
+    if ask_yes_no "Do you want to install required packages (tmux + tpm, fzf, bat, oh-my-posh, JetBrains Mono font)?"; then
         install_packages
     else
         echo -e "${YELLOW}⚠ Skipped package installation${NC}"
     fi
     echo
     
-    # Step 4: Install Tmux Plugin Manager (tpm)
-    if ask_yes_no "Do you want to install Tmux Plugin Manager (tpm)?"; then
-        install_tpm
-    else
-        echo -e "${YELLOW}⚠ Skipped tpm installation${NC}"
-    fi
-    echo
-    
-    # Step 5: Create symlinks
+    # Step 4: Create symlinks
     if ask_yes_no "Do you want to create symlinks for config files?"; then
         create_symlinks
     else
@@ -652,7 +676,7 @@ main() {
     fi
     echo
     
-    # Step 6: Source configuration files
+    # Step 5: Source configuration files
     if ask_yes_no "Do you want to source/reload the configuration files now?"; then
         source_configs
     else
