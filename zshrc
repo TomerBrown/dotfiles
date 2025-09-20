@@ -27,7 +27,6 @@ zinit wait lucid for \
 # Load Oh My Zsh plugins with turbo mode
 zinit wait lucid for \
     OMZP::git \
-    OMZP::tmux \
     OMZP::docker \
     OMZP::node \
     OMZP::colored-man-pages \
