@@ -255,6 +255,8 @@ install_tpm_silent() {
     
     # Clone tpm repository
     if git clone https://github.com/tmux-plugins/tpm "$tpm_dir" >/dev/null 2>&1; then
+        # Ensure the tpm script is executable
+        chmod +x "$tpm_dir/tpm"
         echo -e "${GREEN}  ✓ Successfully installed Tmux Plugin Manager (tpm)${NC}"
         echo -e "${CYAN}  ℹ After tmux configuration is loaded, you can install plugins by pressing prefix + I (Ctrl-B + I by default)${NC}"
     else
@@ -283,6 +285,8 @@ install_tpm() {
     
     # Clone tpm repository
     if git clone https://github.com/tmux-plugins/tpm "$tpm_dir"; then
+        # Ensure the tpm script is executable
+        chmod +x "$tpm_dir/tpm"
         echo -e "${GREEN}✓ Successfully installed Tmux Plugin Manager (tpm)${NC}"
         echo -e "${CYAN}ℹ After tmux configuration is loaded, you can install plugins by pressing prefix + I (Ctrl-B + I by default)${NC}"
     else
