@@ -37,8 +37,19 @@ fi
 # Load plugins with zinit
 zinit light zsh-users/zsh-autosuggestions
 zinit light zdharma-continuum/fast-syntax-highlighting
-zinit light junegunn/fzf
 zinit light zsh-users/zsh-completions
+
+# Load fzf via zinit with proper shell integration
+zinit pack"bgn-binary+keys" for fzf
+
+# Additional fzf configuration
+if command -v fzf >/dev/null 2>&1; then
+    # Set fzf default options for better appearance
+    export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --inline-info --color=16"
+    export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window down:3:hidden:wrap --bind '?:toggle-preview' --color=16"
+    export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:500 {}' --color=16"
+    export FZF_ALT_C_OPTS="--preview 'tree -C {}' --color=16"
+fi
 
 # Oh My Zsh plugins
 zinit snippet OMZP::git
