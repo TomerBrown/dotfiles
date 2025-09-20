@@ -75,35 +75,9 @@ All configurations use the **Catppuccin Mocha** color scheme for a consistent, m
 - Mouse support
 - Copy/paste integration
 
-## 🔧 Manual Setup
-
-If you prefer manual installation:
-
-```bash
-# Clone the repository
-git clone https://github.com/tomerbrown/dotfiles.git ~/.dotfiles
-
-# Create symlinks
-ln -sf ~/.dotfiles/zshrc ~/.zshrc
-ln -sf ~/.dotfiles/tmux.conf ~/.tmux.conf
-ln -sf ~/.dotfiles/ghostty.config ~/.config/ghostty/config
-ln -sf ~/.dotfiles/oh-my-posh ~/.config/oh-my-posh
-
-# Install Zinit
-bash -c "$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"
-
-# Source zsh configuration
-source ~/.zshrc
-```
-
-## 🤝 Contributing
-
-Feel free to fork this repository and customize it for your own needs. If you have improvements or suggestions, pull requests are welcome!
 
 ## 📝 License
 
 This project is open source and available under the [MIT License](LICENSE).
 
 ---
-
-**Enjoy your new development environment!** 🎉
