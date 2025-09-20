@@ -239,8 +239,22 @@ install_packages() {
         echo -e "${GREEN}✓ oh-my-posh is already installed${NC}"
     fi
     
-    # Install JetBrains Mono Nerd Font
+    # Install JetBrains Mono font
     install_jetbrains_font
+    
+    # Ensure tpm is installed if tmux is available
+    if command -v tmux >/dev/null 2>&1; then
+        echo -e "${CYAN}Checking Tmux Plugin Manager (tpm) installation...${NC}"
+        if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
+            echo -e "${YELLOW}Tmux Plugin Manager (tpm) not found. Installing...${NC}"
+            if ! install_tpm_silent; then
+                echo -e "${RED}  ✗ Failed to install tpm${NC}"
+                echo -e "${YELLOW}  ⚠ Tmux will not work properly without tpm${NC}"
+            fi
+        else
+            echo -e "${GREEN}✓ Tmux Plugin Manager (tpm) is already installed${NC}"
+        fi
+    fi
 }
 
 # Function to install Tmux Plugin Manager (tpm) - silent version for automatic installation
