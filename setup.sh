@@ -220,6 +220,34 @@ install_packages() {
     install_jetbrains_font
 }
 
+# Function to install Tmux Plugin Manager (tpm)
+install_tpm() {
+    echo -e "${BLUE}=== Installing Tmux Plugin Manager (tpm) ===${NC}"
+    
+    local tpm_dir="$HOME/.tmux/plugins/tpm"
+    
+    if [[ -d "$tpm_dir" ]]; then
+        echo -e "${GREEN}✓ Tmux Plugin Manager (tpm) is already installed${NC}"
+        return 0
+    fi
+    
+    echo -e "${YELLOW}Installing Tmux Plugin Manager (tpm)...${NC}"
+    
+    # Create the plugins directory if it doesn't exist
+    mkdir -p "$HOME/.tmux/plugins"
+    
+    # Clone tpm repository
+    if git clone https://github.com/tmux-plugins/tpm "$tpm_dir"; then
+        echo -e "${GREEN}✓ Successfully installed Tmux Plugin Manager (tpm)${NC}"
+        echo -e "${CYAN}ℹ After tmux configuration is loaded, you can install plugins by pressing prefix + I (Ctrl-B + I by default)${NC}"
+    else
+        echo -e "${RED}✗ Failed to install Tmux Plugin Manager (tpm)${NC}"
+        echo -e "${YELLOW}⚠ You can install it manually by running:${NC}"
+        echo -e "${CYAN}  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm${NC}"
+        return 1
+    fi
+}
+
 # Function to install JetBrains Mono Nerd Font
 install_jetbrains_font() {
     echo -e "${YELLOW}Checking JetBrains Mono Nerd Font...${NC}"
@@ -490,7 +518,15 @@ main() {
     fi
     echo
     
-    # Step 4: Create symlinks
+    # Step 4: Install Tmux Plugin Manager (tpm)
+    if ask_yes_no "Do you want to install Tmux Plugin Manager (tpm)?"; then
+        install_tpm
+    else
+        echo -e "${YELLOW}⚠ Skipped tpm installation${NC}"
+    fi
+    echo
+    
+    # Step 5: Create symlinks
     if ask_yes_no "Do you want to create symlinks for config files?"; then
         create_symlinks
     else
@@ -498,7 +534,7 @@ main() {
     fi
     echo
     
-    # Step 5: Source configuration files
+    # Step 6: Source configuration files
     if ask_yes_no "Do you want to source/reload the configuration files now?"; then
         source_configs
     else
