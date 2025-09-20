@@ -39,8 +39,48 @@ zinit light zsh-users/zsh-autosuggestions
 zinit light zdharma-continuum/fast-syntax-highlighting
 zinit light zsh-users/zsh-completions
 
-# Load fzf via zinit with proper shell integration
-zinit pack"bgn-binary+keys" for fzf
+# Load fzf with proper shell integration
+if command -v fzf >/dev/null 2>&1; then
+    # Try to source fzf key bindings from various locations
+    local fzf_key_bindings=""
+    local fzf_completion=""
+    
+    if [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]]; then
+        fzf_key_bindings="/opt/homebrew/opt/fzf/shell/key-bindings.zsh"
+        fzf_completion="/opt/homebrew/opt/fzf/shell/completion.zsh"
+    elif [[ -f /usr/local/opt/fzf/shell/key-bindings.zsh ]]; then
+        fzf_key_bindings="/usr/local/opt/fzf/shell/key-bindings.zsh"
+        fzf_completion="/usr/local/opt/fzf/shell/completion.zsh"
+    elif [[ -f ~/.fzf.zsh ]]; then
+        source ~/.fzf.zsh
+    fi
+    
+    # Source the files if found
+    if [[ -n "$fzf_key_bindings" && -f "$fzf_key_bindings" ]]; then
+        source "$fzf_key_bindings"
+    fi
+    if [[ -n "$fzf_completion" && -f "$fzf_completion" ]]; then
+        source "$fzf_completion"
+    fi
+    
+    # If sourcing didn't work, create a simple Ctrl+R binding manually
+    if ! type fzf-history-widget >/dev/null 2>&1; then
+        # Create a simple fzf history function
+        fzf-history-widget() {
+            local selected
+            selected=$(fc -rl 1 | fzf --tac --no-sort --tiebreak=index --query="$LBUFFER" \
+                --height=40% --layout=reverse --border --prompt="History: " \
+                --preview="echo {}" --preview-window=down:3:wrap)
+            if [[ -n "$selected" ]]; then
+                BUFFER=$(echo "$selected" | sed 's/^[ ]*[0-9]*[ ]*//')
+                CURSOR=$#BUFFER
+            fi
+            zle redisplay
+        }
+        zle -N fzf-history-widget
+        bindkey '^R' fzf-history-widget
+    fi
+fi
 
 # Additional fzf configuration
 if command -v fzf >/dev/null 2>&1; then
