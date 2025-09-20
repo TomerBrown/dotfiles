@@ -2,8 +2,7 @@
 
 # Basic exports and aliases
 export EDITOR="code -w"
-alias fix_civ6="rm /Users/tomerbrown/Library/Application Support/Sid Meier's Civilization VI/Firaxis Games/Sid Meier's Civilization VI/AppOptions.txt"
-alias say_hello="echo Hello"
+
 
 # Zinit initialization (fast path)
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
