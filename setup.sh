@@ -212,7 +212,11 @@ install_packages() {
         # Install tpm automatically after tmux is installed
         if [[ "$package" == "tmux" ]] && command -v tmux >/dev/null 2>&1; then
             echo -e "${CYAN}Installing Tmux Plugin Manager (tpm) for tmux...${NC}"
-            install_tpm_silent
+            if ! install_tpm_silent; then
+                echo -e "${RED}  ✗ Failed to install tpm automatically${NC}"
+                echo -e "${YELLOW}  ⚠ Tmux will not work properly without tpm${NC}"
+                echo -e "${CYAN}  ℹ You can install it manually later or re-run this script${NC}"
+            fi
         fi
     done
     
@@ -259,9 +263,15 @@ install_tpm_silent() {
         rm -rf "$tpm_dir"
     fi
     
+    # Check if git is available
+    if ! command -v git >/dev/null 2>&1; then
+        echo -e "${RED}  ✗ Git is not installed. Please install git first.${NC}"
+        return 1
+    fi
+    
     # Clone tpm repository
     echo -e "${CYAN}  Cloning tpm repository...${NC}"
-    if git clone https://github.com/tmux-plugins/tpm "$tpm_dir" >/dev/null 2>&1; then
+    if git clone https://github.com/tmux-plugins/tpm "$tpm_dir" 2>/dev/null; then
         # Ensure the tpm script is executable
         chmod +x "$tpm_dir/tpm"
         
@@ -778,6 +788,31 @@ main() {
     fi
     echo
     
+    # Final verification of critical components
+    echo -e "${BLUE}=== Final Verification ===${NC}"
+    
+    # Check if tpm is properly installed if tmux was installed
+    if command -v tmux >/dev/null 2>&1; then
+        if [[ ! -x "$HOME/.tmux/plugins/tpm/tpm" ]]; then
+            echo -e "${RED}⚠ WARNING: Tmux Plugin Manager (tpm) is not properly installed!${NC}"
+            echo -e "${YELLOW}Attempting to install tpm now...${NC}"
+            
+            # Try to install tpm one more time
+            mkdir -p "$HOME/.tmux/plugins"
+            if git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" 2>/dev/null; then
+                chmod +x "$HOME/.tmux/plugins/tpm/tpm"
+                echo -e "${GREEN}✓ Successfully installed tpm${NC}"
+            else
+                echo -e "${RED}✗ Failed to install tpm. Manual installation required:${NC}"
+                echo -e "${CYAN}  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm${NC}"
+                echo -e "${CYAN}  chmod +x ~/.tmux/plugins/tpm/tpm${NC}"
+            fi
+        else
+            echo -e "${GREEN}✓ Tmux Plugin Manager (tpm) is properly installed${NC}"
+        fi
+    fi
+    
+    echo
     echo -e "${GREEN}🎉 Setup complete! 🎉${NC}"
     echo
     print_next_steps
