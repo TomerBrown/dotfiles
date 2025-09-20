@@ -239,8 +239,8 @@ install_packages() {
         echo -e "${GREEN}✓ oh-my-posh is already installed${NC}"
     fi
     
-    # Install JetBrains Mono font
-    install_jetbrains_font
+    # Install JetBrains Mono Nerd Font
+    install_jetbrains_nerd_font
     
     # Ensure tpm is installed if tmux is available
     if command -v tmux >/dev/null 2>&1; then
@@ -340,175 +340,69 @@ install_tpm() {
     fi
 }
 
-# Function to install JetBrains Mono font
-install_jetbrains_font() {
-    echo -e "${YELLOW}Checking JetBrains Mono font...${NC}"
+# Function to install JetBrains Mono Nerd Font
+install_jetbrains_nerd_font() {
+    local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local nerd_font_script="$dotfiles_dir/install_nerd_font.sh"
     
-    # Check if font is already installed by looking for font files
-    if check_jetbrains_font_installed; then
-        echo -e "${GREEN}✓ JetBrains Mono font is already installed${NC}"
-        return 0
+    if [[ -f "$nerd_font_script" ]]; then
+        echo -e "${CYAN}Using dedicated Nerd Font installation script...${NC}"
+        source "$nerd_font_script"
+        if install_jetbrains_nerd_font; then
+            return 0
+        else
+            echo -e "${YELLOW}⚠ Nerd Font script failed, trying Homebrew fallback...${NC}"
+            install_jetbrains_font_homebrew_fallback
+        fi
+    else
+        echo -e "${YELLOW}⚠ Nerd Font script not found, using fallback method...${NC}"
+        install_jetbrains_font_homebrew_fallback
     fi
-    
+}
+
+# Function to install JetBrains Mono font via Homebrew (fallback)
+install_jetbrains_font_homebrew_fallback() {
     case "$PKG_MANAGER" in
         "brew")
-            # Try installing via Homebrew first (Nerd Font version for better terminal support)
             echo -e "${YELLOW}Installing JetBrains Mono Nerd Font via Homebrew...${NC}"
             if brew install --cask font-jetbrains-mono-nerd-font 2>/dev/null; then
                 echo -e "${GREEN}✓ Successfully installed JetBrains Mono Nerd Font via Homebrew${NC}"
                 return 0
             else
-                echo -e "${YELLOW}⚠ Homebrew installation failed, trying official download...${NC}"
-                install_jetbrains_font_official
+                echo -e "${YELLOW}⚠ Homebrew installation failed, trying manual method...${NC}"
+                install_jetbrains_font_manual
+                return 1
             fi
             ;;
         *)
-            # For other systems, use official download
-            install_jetbrains_font_official
+            install_jetbrains_font_manual
+            return 1
             ;;
     esac
 }
 
-# Function to check if JetBrains Mono font is installed
-check_jetbrains_font_installed() {
-    # Check common font installation paths
-    local font_paths=(
-        "/System/Library/Fonts/JetBrainsMono*.ttf"
-        "/Library/Fonts/JetBrainsMono*.ttf"
-        "$HOME/Library/Fonts/JetBrainsMono*.ttf"
-        "$HOME/.local/share/fonts/JetBrainsMono*.ttf"
-        "$HOME/.fonts/JetBrainsMono*.ttf"
-        "/usr/share/fonts/*/JetBrainsMono*.ttf"
-    )
-    
-    for path in "${font_paths[@]}"; do
-        if ls $path >/dev/null 2>&1; then
-            return 0  # Font found
-        fi
-    done
-    
-    # Also check using system font commands if available
-    if command -v fc-list >/dev/null 2>&1; then
-        if fc-list | grep -i "jetbrains.*mono" >/dev/null 2>&1; then
-            return 0  # Font found
-        fi
-    fi
-    
-    return 1  # Font not found
-}
-
-# Function to install JetBrains Mono font using official download
-install_jetbrains_font_official() {
-    echo -e "${YELLOW}Installing JetBrains Mono font from official source...${NC}"
-    
-    local temp_dir=$(mktemp -d)
-    local download_url="https://github.com/JetBrains/JetBrainsMono/releases/latest/download/JetBrainsMono.zip"
-    local zip_file="$temp_dir/JetBrainsMono.zip"
-    
-    # Download the font
-    echo -e "${CYAN}Downloading JetBrains Mono font...${NC}"
-    if command -v curl >/dev/null 2>&1; then
-        if curl -L -o "$zip_file" "$download_url"; then
-            echo -e "${GREEN}✓ Downloaded JetBrains Mono font${NC}"
-        else
-            echo -e "${RED}✗ Failed to download font${NC}"
-            install_jetbrains_font_manual
-            return 1
-        fi
-    elif command -v wget >/dev/null 2>&1; then
-        if wget -O "$zip_file" "$download_url"; then
-            echo -e "${GREEN}✓ Downloaded JetBrains Mono font${NC}"
-        else
-            echo -e "${RED}✗ Failed to download font${NC}"
-            install_jetbrains_font_manual
-            return 1
-        fi
-    else
-        echo -e "${RED}✗ Neither curl nor wget found${NC}"
-        install_jetbrains_font_manual
-        return 1
-    fi
-    
-    # Extract the font
-    echo -e "${CYAN}Extracting font files...${NC}"
-    if command -v unzip >/dev/null 2>&1; then
-        if unzip -q "$zip_file" -d "$temp_dir"; then
-            echo -e "${GREEN}✓ Extracted font files${NC}"
-        else
-            echo -e "${RED}✗ Failed to extract font${NC}"
-            rm -rf "$temp_dir"
-            install_jetbrains_font_manual
-            return 1
-        fi
-    else
-        echo -e "${RED}✗ unzip command not found${NC}"
-        rm -rf "$temp_dir"
-        install_jetbrains_font_manual
-        return 1
-    fi
-    
-    # Install the font based on OS
-    local font_dir
-    if [[ "$OS" == "macos" ]]; then
-        font_dir="$HOME/Library/Fonts"
-        mkdir -p "$font_dir"
-        echo -e "${CYAN}Installing fonts to $font_dir...${NC}"
-        if find "$temp_dir" -name "*.ttf" -exec cp {} "$font_dir/" \;; then
-            echo -e "${GREEN}✓ Successfully installed JetBrains Mono font${NC}"
-            echo -e "${CYAN}ℹ Font is now available system-wide${NC}"
-        else
-            echo -e "${RED}✗ Failed to copy font files${NC}"
-            rm -rf "$temp_dir"
-            return 1
-        fi
-    else
-        # Linux
-        font_dir="$HOME/.local/share/fonts"
-        mkdir -p "$font_dir"
-        echo -e "${CYAN}Installing fonts to $font_dir...${NC}"
-        if find "$temp_dir" -name "*.ttf" -exec cp {} "$font_dir/" \;; then
-            echo -e "${GREEN}✓ Successfully installed JetBrains Mono font${NC}"
-            # Refresh font cache
-            if command -v fc-cache >/dev/null 2>&1; then
-                echo -e "${CYAN}Refreshing font cache...${NC}"
-                fc-cache -f -v >/dev/null 2>&1
-                echo -e "${GREEN}✓ Font cache refreshed${NC}"
-            fi
-        else
-            echo -e "${RED}✗ Failed to copy font files${NC}"
-            rm -rf "$temp_dir"
-            return 1
-        fi
-    fi
-    
-    # Clean up
-    rm -rf "$temp_dir"
-    
-    echo -e "${CYAN}ℹ JetBrains Mono font installed successfully!${NC}"
-    echo -e "${CYAN}  Recommended settings: Size 13, Line spacing 1.2${NC}"
-}
 
 # Function to provide manual installation instructions
 install_jetbrains_font_manual() {
-    echo -e "${CYAN}Manual JetBrains Mono font installation:${NC}"
-    echo -e "${CYAN}Automatic installation failed. Please install manually using the official method:${NC}"
+    echo -e "${CYAN}Manual JetBrains Mono Nerd Font installation:${NC}"
+    echo -e "${CYAN}Automatic installation failed. Please install manually:${NC}"
     echo
-    echo -e "${YELLOW}Official JetBrains Mono Installation:${NC}"
-    echo -e "${CYAN}1. Visit: https://www.jetbrains.com/lp/mono/#how-to-install${NC}"
-    echo -e "${CYAN}2. Click 'Download font' to get JetBrainsMono.zip${NC}"
+    echo -e "${YELLOW}Nerd Fonts Installation (Recommended):${NC}"
+    echo -e "${CYAN}1. Visit: https://github.com/ryanoasis/nerd-fonts/releases/latest${NC}"
+    echo -e "${CYAN}2. Download JetBrainsMono.zip${NC}"
     echo -e "${CYAN}3. Extract the archive${NC}"
     echo -e "${CYAN}4. Install the font files:${NC}"
     if [[ "$OS" == "macos" ]]; then
         echo -e "${CYAN}   • Select all .ttf files and double-click 'Install Font'${NC}"
-        echo -e "${CYAN}   • Or right-click the files and select 'Install'${NC}"
+        echo -e "${CYAN}   • Or drag them to Font Book${NC}"
     else
         echo -e "${CYAN}   • Copy .ttf files to ~/.local/share/fonts/${NC}"
         echo -e "${CYAN}   • Run: fc-cache -f -v${NC}"
     fi
-    echo -e "${CYAN}5. Restart your IDE/editor${NC}"
-    echo -e "${CYAN}6. Set font to 'JetBrains Mono' with size 13 and line spacing 1.2${NC}"
+    echo -e "${CYAN}5. Restart your terminal/IDE${NC}"
+    echo -e "${CYAN}6. Set font to 'JetBrainsMono Nerd Font' with size 13${NC}"
     echo
-    echo -e "${YELLOW}⚠ This font provides better code readability and is recommended for development${NC}"
+    echo -e "${YELLOW}⚠ Nerd Fonts provide better icon and symbol support for development${NC}"
 }
 
 # Function to handle a single symlink
@@ -562,6 +456,7 @@ create_symlinks() {
     
     # Create symlinks one by one (compatible with sh and bash)
     create_single_symlink "$dotfiles_dir/zshrc" "$HOME/.zshrc"
+    create_single_symlink "$dotfiles_dir/vimrc" "$HOME/.vimrc"
     create_single_symlink "$dotfiles_dir/tmux.conf" "$HOME/.tmux.conf"
     create_single_symlink "$dotfiles_dir/oh-my-posh" "$HOME/.config/oh-my-posh"
     create_single_symlink "$dotfiles_dir/ghostty.config" "$HOME/.config/ghostty/config"
@@ -570,7 +465,7 @@ create_symlinks() {
     echo -e "${CYAN}Symlink Summary:${NC}"
     
     # Check each symlink for summary
-    local targets=("$HOME/.zshrc" "$HOME/.tmux.conf" "$HOME/.config/oh-my-posh" "$HOME/.config/ghostty/config")
+    local targets=("$HOME/.zshrc" "$HOME/.vimrc" "$HOME/.tmux.conf" "$HOME/.config/oh-my-posh" "$HOME/.config/ghostty/config")
     for target in "${targets[@]}"; do
         if [[ -L "$target" ]]; then
             echo -e "${GREEN}  ✓ $target -> $(readlink "$target")${NC}"
@@ -701,10 +596,10 @@ print_next_steps() {
     
     # Font information
     echo -e "${YELLOW}🔤 Font Configuration:${NC}"
-    echo -e "${CYAN}  • JetBrains Mono font has been installed${NC}"
+    echo -e "${CYAN}  • JetBrains Mono Nerd Font has been installed${NC}"
     echo -e "${CYAN}  • Recommended settings: Size 13, Line spacing 1.2${NC}"
-    echo -e "${CYAN}  • Configure your terminal/IDE to use 'JetBrains Mono' font${NC}"
-    echo -e "${CYAN}  • This font provides excellent code readability and ligatures${NC}"
+    echo -e "${CYAN}  • Configure your terminal/IDE to use 'JetBrainsMono Nerd Font' font${NC}"
+    echo -e "${CYAN}  • This font provides excellent code readability, ligatures, and dev icons${NC}"
     echo
     
     # Development tools
@@ -719,14 +614,14 @@ print_next_steps() {
     echo -e "${YELLOW}📝 Configuration Files:${NC}"
     echo -e "${CYAN}  • All config files are symlinked to this dotfiles repository${NC}"
     echo -e "${CYAN}  • Edit configs here to keep them in version control${NC}"
-    echo -e "${CYAN}  • Main configs: ~/.zshrc, ~/.tmux.conf, ~/.config/ghostty/config${NC}"
+    echo -e "${CYAN}  • Main configs: ~/.zshrc, ~/.vimrc, ~/.tmux.conf, ~/.config/ghostty/config${NC}"
     echo -e "${CYAN}  • oh-my-posh theme: ~/.config/oh-my-posh/base.json${NC}"
     echo
     
     # Terminal application
     if [[ -f "$HOME/.config/ghostty/config" ]]; then
         echo -e "${YELLOW}👻 Ghostty Terminal:${NC}"
-        echo -e "${CYAN}  • Your Ghostty terminal is configured with JetBrains Mono font${NC}"
+        echo -e "${CYAN}  • Your Ghostty terminal is configured with JetBrains Mono Nerd Font${NC}"
         echo -e "${CYAN}  • Configuration will take effect when you restart Ghostty${NC}"
         echo -e "${CYAN}  • Settings are optimized for development work${NC}"
         echo
@@ -736,7 +631,7 @@ print_next_steps() {
     echo -e "${YELLOW}🔧 Troubleshooting:${NC}"
     echo -e "${CYAN}  • If commands aren't found, restart your terminal${NC}"
     echo -e "${CYAN}  • If tmux plugins don't work, run tmux and press ${GREEN}Ctrl-B + I${NC}"
-    echo -e "${CYAN}  • If fonts look wrong, ensure JetBrains Mono is selected in your terminal${NC}"
+    echo -e "${CYAN}  • If fonts look wrong, ensure JetBrains Mono Nerd Font is selected in your terminal${NC}"
     echo -e "${CYAN}  • All configs are in: ${GREEN}$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)${NC}"
     echo
     
@@ -778,7 +673,7 @@ main() {
     echo
     
     # Step 3: Install packages
-    if ask_yes_no "Do you want to install required packages (tmux + tpm, fzf, bat, oh-my-posh, JetBrains Mono font)?"; then
+    if ask_yes_no "Do you want to install required packages (tmux + tpm, fzf, bat, oh-my-posh, JetBrains Mono Nerd Font)?"; then
         install_packages
     else
         echo -e "${YELLOW}⚠ Skipped package installation${NC}"
