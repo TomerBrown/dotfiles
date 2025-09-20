@@ -253,16 +253,35 @@ install_tpm_silent() {
     # Create the plugins directory if it doesn't exist
     mkdir -p "$HOME/.tmux/plugins"
     
+    # Remove existing tpm directory if it exists but might be corrupted
+    if [[ -d "$tpm_dir" ]]; then
+        echo -e "${YELLOW}  Removing existing tpm directory...${NC}"
+        rm -rf "$tpm_dir"
+    fi
+    
     # Clone tpm repository
+    echo -e "${CYAN}  Cloning tpm repository...${NC}"
     if git clone https://github.com/tmux-plugins/tpm "$tpm_dir" >/dev/null 2>&1; then
         # Ensure the tpm script is executable
         chmod +x "$tpm_dir/tpm"
-        echo -e "${GREEN}  ✓ Successfully installed Tmux Plugin Manager (tpm)${NC}"
-        echo -e "${CYAN}  ℹ After tmux configuration is loaded, you can install plugins by pressing prefix + I (Ctrl-B + I by default)${NC}"
+        
+        # Verify installation
+        if [[ -x "$tpm_dir/tpm" ]]; then
+            echo -e "${GREEN}  ✓ Successfully installed Tmux Plugin Manager (tpm)${NC}"
+            echo -e "${CYAN}  ℹ After tmux configuration is loaded, you can install plugins by pressing prefix + I (Ctrl-B + I by default)${NC}"
+        else
+            echo -e "${RED}  ✗ tpm script is not executable after installation${NC}"
+            return 1
+        fi
     else
         echo -e "${RED}  ✗ Failed to install Tmux Plugin Manager (tpm)${NC}"
+        echo -e "${YELLOW}  ⚠ This might be due to:${NC}"
+        echo -e "${CYAN}    - No internet connection${NC}"
+        echo -e "${CYAN}    - Git not installed${NC}"
+        echo -e "${CYAN}    - Permission issues${NC}"
         echo -e "${YELLOW}  ⚠ You can install it manually by running:${NC}"
         echo -e "${CYAN}    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm${NC}"
+        echo -e "${CYAN}    chmod +x ~/.tmux/plugins/tpm/tpm${NC}"
         return 1
     fi
 }
