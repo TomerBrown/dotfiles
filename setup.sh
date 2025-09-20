@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Check if running with bash (array support test)
+if ! (return 0 2>/dev/null) && [ -z "$BASH_VERSION" ]; then
+    echo "Error: This script requires bash to run properly."
+    echo "The syntax error you're seeing is because this script uses bash-specific features."
+    echo ""
+    echo "Please run it with one of these methods:"
+    echo "  bash setup.sh    (recommended)"
+    echo "  ./setup.sh       (uses shebang)"
+    echo ""
+    echo "Do NOT use: sh setup.sh"
+    exit 1
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
