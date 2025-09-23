@@ -142,10 +142,18 @@ install_jetbrains_nerd_font() {
     # Copy only .ttf files to the font directory
     echo -e "${CYAN}Installing font files to $FONT_DIR...${NC}"
     local font_count=0
-    while IFS= read -r -d '' font_file; do
-        cp "$font_file" "$FONT_DIR/"
-        font_count=$((font_count + 1))
-    done < <(find "$extract_dir" -name "*.ttf" -print0)
+    
+    # Find and copy .ttf files using a more compatible approach
+    find "$extract_dir" -name "*.ttf" -type f | while read -r font_file; do
+        if [[ -f "$font_file" ]]; then
+            cp "$font_file" "$FONT_DIR/"
+            font_count=$((font_count + 1))
+            echo -e "${GREEN}  ✓ Installed: $(basename "$font_file")${NC}"
+        fi
+    done
+    
+    # Count the actual installed files
+    font_count=$(find "$FONT_DIR" -name "JetBrains*" -name "*.ttf" | wc -l)
     
     if [ $font_count -eq 0 ]; then
         echo -e "${RED}✗ Error: No .ttf font files found in the archive${NC}"

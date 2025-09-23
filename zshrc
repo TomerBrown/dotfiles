@@ -54,11 +54,22 @@ conda() { __conda_lazy_init; conda "$@"; }
 
 # Fast fzf integration with single check
 if command -v fzf >/dev/null 2>&1; then
-    # Set fzf options first (fast)
-    export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --inline-info --color=16"
-    export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window down:3:hidden:wrap --bind '?:toggle-preview' --color=16"
-    export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || echo {}' --color=16"
-    export FZF_ALT_C_OPTS="--preview 'tree -C {} 2>/dev/null || ls -la {}' --color=16"
+    # Set fzf to use fd as default command (faster and more user-friendly than find)
+    if command -v fd >/dev/null 2>&1; then
+        export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+        # Ctrl+T should include both files and directories
+        export FZF_CTRL_T_COMMAND="fd --hidden --follow --exclude .git"
+    fi
+    
+    # Set clean fzf defaults - no forced previews for generic use
+    export FZF_DEFAULT_OPTS="--style full --height=100% --layout=reverse --border --inline-info --color=16"
+    
+    # Ctrl+T with your specific configuration
+    export FZF_CTRL_T_OPTS="--style full --preview '~/dotfiles/fzf-preview.sh {}' --bind 'focus:transform-header:file --brief {}' --height=100%"
+    export FZF_ALT_C_OPTS="--preview 'tree -C {} 2>/dev/null || ls -la {}'"
+    
+    # Enhanced Ctrl+R with syntax-highlighted command preview
+    export FZF_CTRL_R_OPTS="--preview 'echo {} | sed \"s/^[ ]*[0-9]*[ ]*//\" | bat --color=always --language=bash --style=numbers --wrap=never -' --preview-window=right:50%:wrap"
     
     # Lazy-load fzf integration for speed
     __fzf_lazy_init() {
@@ -93,9 +104,41 @@ if command -v fzf >/dev/null 2>&1; then
     __fzf_history_trigger() { __fzf_lazy_init; fzf-history-widget; }
     zle -N __fzf_history_trigger
     bindkey '^R' __fzf_history_trigger
+    
+    # Simple directory browser with fzf
+    fzf-directory-browser() {
+        local selected
+        # Use fd if available, fallback to find
+        if command -v fd >/dev/null 2>&1; then
+            selected=$(fd --type d --hidden --follow --exclude .git . | \
+                fzf --prompt="📁 Directories: " \
+                    --header="Press ENTER to cd into directory, ESC to cancel" \
+                    --preview 'tree -C -L 3 {} 2>/dev/null | head -20 || ls -la {} | head -20')
+        else
+            selected=$(find . -type d -not -path '*/.*' 2>/dev/null | \
+                fzf --prompt="📁 Directories: " \
+                    --header="Press ENTER to cd into directory, ESC to cancel" \
+                    --preview 'tree -C -L 3 {} 2>/dev/null | head -20 || ls -la {} | head -20')
+        fi
+        
+        if [[ -n "$selected" ]]; then
+            cd "$selected"
+            echo "Changed to: $(pwd)"
+        fi
+    }
 fi
 
 # Lazy-load oh-my-posh (defer for speed)
 if [[ "$TERM_PROGRAM" != "Apple_Terminal" ]]; then
     eval "$(oh-my-posh init zsh --config ~/dotfiles/oh-my-posh/base.json)"
 fi
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/tomerbrown/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
+
+# Aliases
+alias ls=eza
+alias d='fzf-directory-browser'  # Directory browser with tree preview
+alias find='fd'

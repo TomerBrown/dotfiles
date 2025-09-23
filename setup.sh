@@ -126,6 +126,30 @@ is_package_installed() {
     esac
 }
 
+# Function to check if fd is installed (handles different package names)
+is_fd_installed() {
+    # Check if the fd command is available regardless of package name
+    if command -v fd >/dev/null 2>&1; then
+        return 0
+    fi
+    
+    # If command not found, check package installation by name
+    case "$PKG_MANAGER" in
+        "brew")
+            is_package_installed "fd"
+            ;;
+        "apt"|"yum")
+            is_package_installed "fd-find"
+            ;;
+        "pacman")
+            is_package_installed "fd"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 # Function to install packages
 install_package() {
     local package="$1"
@@ -204,7 +228,7 @@ initialize_zinit() {
 install_packages() {
     echo -e "${BLUE}=== Installing Required Packages ===${NC}"
     
-    local packages=("tmux" "fzf" "bat")
+    local packages=("tmux" "fzf" "bat" "tree" "eza" "fribidi")
     
     for package in "${packages[@]}"; do
         install_package "$package"
@@ -219,6 +243,52 @@ install_packages() {
             fi
         fi
     done
+    
+    # Special handling for fd (package name varies by system)
+    if is_fd_installed; then
+        echo -e "${GREEN}✓ fd is already installed${NC}"
+    else
+        echo -e "${YELLOW}Installing fd (find alternative)...${NC}"
+        local fd_package=""
+        case "$PKG_MANAGER" in
+            "brew")
+                fd_package="fd"
+                ;;
+            "apt")
+                fd_package="fd-find"
+                ;;
+            "yum")
+                fd_package="fd-find"
+                ;;
+            "pacman")
+                fd_package="fd"
+                ;;
+            *)
+                echo -e "${YELLOW}Unknown package manager for fd installation${NC}"
+                fd_package="fd"
+                ;;
+        esac
+        
+        if [[ -n "$fd_package" ]]; then
+            case "$PKG_MANAGER" in
+                "brew")
+                    brew install "$fd_package"
+                    ;;
+                "apt")
+                    sudo apt update && sudo apt install -y "$fd_package"
+                    ;;
+                "yum")
+                    sudo yum install -y "$fd_package"
+                    ;;
+                "pacman")
+                    sudo pacman -S --noconfirm "$fd_package"
+                    ;;
+                *)
+                    echo -e "${RED}Cannot install $fd_package: unsupported package manager${NC}"
+                    ;;
+            esac
+        fi
+    fi
     
     # Special handling for oh-my-posh
     if ! command -v oh-my-posh >/dev/null 2>&1; then
@@ -606,6 +676,10 @@ print_next_steps() {
     echo -e "${YELLOW}🛠️  Development Tools Available:${NC}"
     echo -e "${CYAN}  • ${GREEN}fzf${NC} - Fuzzy finder (integrated with zsh history and file search)"
     echo -e "${CYAN}  • ${GREEN}bat${NC} - Enhanced 'cat' with syntax highlighting"
+    echo -e "${CYAN}  • ${GREEN}tree${NC} - Display directory structure as a tree"
+    echo -e "${CYAN}  • ${GREEN}eza${NC} - Modern replacement for 'ls' with colors and icons"
+    echo -e "${CYAN}  • ${GREEN}fd${NC} - Fast and user-friendly alternative to 'find'"
+    echo -e "${CYAN}  • ${GREEN}fribidi${NC} - Unicode bidirectional text support (for Hebrew RTL)"
     echo -e "${CYAN}  • ${GREEN}zinit${NC} - Fast zsh plugin manager (auto-configured)"
     echo -e "${CYAN}  • Enhanced zsh with auto-suggestions, syntax highlighting, and more${NC}"
     echo
@@ -673,7 +747,7 @@ main() {
     echo
     
     # Step 3: Install packages
-    if ask_yes_no "Do you want to install required packages (tmux + tpm, fzf, bat, oh-my-posh, JetBrains Mono Nerd Font)?"; then
+    if ask_yes_no "Do you want to install required packages (tmux + tpm, fzf, bat, tree, eza, fd, fribidi, oh-my-posh, JetBrains Mono Nerd Font)?"; then
         install_packages
     else
         echo -e "${YELLOW}⚠ Skipped package installation${NC}"
