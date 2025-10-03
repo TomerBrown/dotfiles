@@ -13,7 +13,9 @@ fi
 
 # If it's a directory, show tree structure
 if [[ -d "$file" ]]; then
-    if command -v tree >/dev/null 2>&1; then
+    if command -v eza >/dev/null 2>&1; then
+        eza --tree --icons --level=3 --color=always "$file" 2>/dev/null | head -50
+    elif command -v tree >/dev/null 2>&1; then
         tree -C -L 3 "$file" 2>/dev/null | head -50
     else
         ls -la "$file" 2>/dev/null

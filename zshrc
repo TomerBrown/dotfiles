@@ -73,8 +73,8 @@ if command -v fzf >/dev/null 2>&1; then
     export FZF_DEFAULT_OPTS="--style full --height=100% --layout=reverse --border --inline-info --color=16"
     
     # Ctrl+T with your specific configuration
-    export FZF_CTRL_T_OPTS="--style full --preview '~/dotfiles/fzf-preview.sh {}' --bind 'focus:transform-header:file --brief {}' --height=100%"
-    export FZF_ALT_C_OPTS="--preview 'tree -C {} 2>/dev/null || ls -la {}'"
+    export FZF_CTRL_T_OPTS="--ansi --style full --preview '~/dotfiles/fzf-preview.sh {}' --bind 'focus:transform-header:file --brief {}' --height=100%"
+    export FZF_ALT_C_OPTS="--ansi --preview 'eza --tree --icons --level=2 --color=always {} 2>/dev/null || tree -C {} 2>/dev/null || ls -la {}'"
     
     # Enhanced Ctrl+R with syntax-highlighted command preview
     export FZF_CTRL_R_OPTS="--preview 'echo {} | sed \"s/^[ ]*[0-9]*[ ]*//\" | bat --color=always --language=bash --style=numbers --wrap=never -' --preview-window=right:50%:wrap"
@@ -121,12 +121,14 @@ if command -v fzf >/dev/null 2>&1; then
             selected=$(fd --type d --hidden --follow --exclude .git . | \
                 fzf --prompt="📁 Directories: " \
                     --header="Press ENTER to cd into directory, ESC to cancel" \
-                    --preview 'tree -C -L 3 {} 2>/dev/null | head -20 || ls -la {} | head -20')
+                    --ansi \
+                    --preview 'eza --tree --icons --level=2 --color=always {} | head -20')
         else
             selected=$(find . -type d -not -path '*/.*' 2>/dev/null | \
                 fzf --prompt="📁 Directories: " \
                     --header="Press ENTER to cd into directory, ESC to cancel" \
-                    --preview 'tree -C -L 3 {} 2>/dev/null | head -20 || ls -la {} | head -20')
+                    --ansi \
+                    --preview 'eza --tree --icons --level=2 --color=always {} | head -20')
         fi
         
         if [[ -n "$selected" ]]; then
@@ -165,7 +167,7 @@ alias find='fd'
 # Eza Aliases
 alias ls='eza --long -a --header --icons --git --color=auto'
 alias ll='eza -al --header --icons --git --color=auto --group-directories-first'
-alias lt='eza --tree --level=2' # Tree view of directories up to level 2
+alias lt='eza --tree --level=2 --icons --color=auto' # Tree view of directories up to level 2
 
 # Yazi
 function y() {
