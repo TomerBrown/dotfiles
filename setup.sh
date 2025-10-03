@@ -224,11 +224,68 @@ initialize_zinit() {
     echo -e "${GREEN}✓ Zinit installed successfully${NC}"
 }
 
+# Function to install fzf from GitHub using Git
+install_fzf_from_git() {
+    echo -e "${YELLOW}Installing fzf from GitHub...${NC}"
+    
+    local fzf_dir="$HOME/.fzf"
+    
+    if [[ -d "$fzf_dir" ]]; then
+        echo -e "${GREEN}✓ fzf directory already exists${NC}"
+        if [[ -f "$fzf_dir/bin/fzf" ]]; then
+            echo -e "${GREEN}✓ fzf is already installed${NC}"
+            return 0
+        fi
+    fi
+    
+    # Check if git is available
+    if ! command -v git >/dev/null 2>&1; then
+        echo -e "${RED}✗ Git is not installed. Please install git first.${NC}"
+        return 1
+    fi
+    
+    # Remove existing fzf directory if it exists but might be incomplete
+    if [[ -d "$fzf_dir" ]]; then
+        echo -e "${YELLOW}Removing existing fzf directory...${NC}"
+        rm -rf "$fzf_dir"
+    fi
+    
+    # Clone the repository with depth 1
+    echo -e "${CYAN}Cloning fzf repository...${NC}"
+    if git clone --depth 1 https://github.com/junegunn/fzf.git "$fzf_dir"; then
+        # Navigate to the fzf directory and run the install script
+        echo -e "${CYAN}Running fzf install script...${NC}"
+        cd "$fzf_dir"
+        
+        # Run the install script with automatic yes to all prompts
+        if ./install --all; then
+            echo -e "${GREEN}✓ Successfully installed fzf from GitHub${NC}"
+            echo -e "${CYAN}ℹ fzf key bindings and auto-completion have been set up${NC}"
+            cd - >/dev/null  # Return to previous directory
+            return 0
+        else
+            echo -e "${RED}✗ Failed to run fzf install script${NC}"
+            cd - >/dev/null  # Return to previous directory
+            return 1
+        fi
+    else
+        echo -e "${RED}✗ Failed to clone fzf repository${NC}"
+        echo -e "${YELLOW}⚠ This might be due to:${NC}"
+        echo -e "${CYAN}    - No internet connection${NC}"
+        echo -e "${CYAN}    - Git not installed${NC}"
+        echo -e "${CYAN}    - Permission issues${NC}"
+        echo -e "${YELLOW}⚠ You can install it manually by running:${NC}"
+        echo -e "${CYAN}    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf${NC}"
+        echo -e "${CYAN}    cd ~/.fzf && ./install${NC}"
+        return 1
+    fi
+}
+
 # Function to install required packages
 install_packages() {
     echo -e "${BLUE}=== Installing Required Packages ===${NC}"
     
-    local packages=("tmux" "fzf" "bat" "tree" "eza" "fribidi")
+    local packages=("tmux" "bat" "tree" "eza" "fribidi" "yazi")
     
     for package in "${packages[@]}"; do
         install_package "$package"
@@ -243,6 +300,9 @@ install_packages() {
             fi
         fi
     done
+    
+    # Install fzf from GitHub using Git
+    install_fzf_from_git
     
     # Special handling for fd (package name varies by system)
     if is_fd_installed; then

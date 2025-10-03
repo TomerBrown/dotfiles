@@ -3,6 +3,11 @@
 # Basic exports and aliases
 export EDITOR="code -w"
 
+# Needed for android simulator
+export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"
+export ANDROID_HOME="/Users/tomerbrown/Library/Android/sdk"
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 # Zinit initialization (fast path)
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
@@ -51,6 +56,9 @@ __conda_lazy_init() {
 }
 # Create conda alias that triggers lazy loading
 conda() { __conda_lazy_init; conda "$@"; }
+
+# Add fzf to PATH
+export PATH="$PATH:$HOME/.fzf/bin"
 
 # Fast fzf integration with single check
 if command -v fzf >/dev/null 2>&1; then
@@ -128,6 +136,17 @@ if command -v fzf >/dev/null 2>&1; then
     }
 fi
 
+export FZF_DEFAULT_OPTS=" \
+--color=bg+:#414559,bg:#303446,spinner:#F2D5CF,hl:#E78284 \
+--color=fg:#C6D0F5,header:#E78284,info:#CA9EE6,pointer:#F2D5CF \
+--color=marker:#BABBF1,fg+:#C6D0F5,prompt:#CA9EE6,hl+:#E78284 \
+--color=selected-bg:#51576D \
+--color=border:#737994,label:#C6D0F5"
+
+# Zoxide related
+eval "$(zoxide init zsh)"
+
+
 # Lazy-load oh-my-posh (defer for speed)
 if [[ "$TERM_PROGRAM" != "Apple_Terminal" ]]; then
     eval "$(oh-my-posh init zsh --config ~/dotfiles/oh-my-posh/base.json)"
@@ -142,3 +161,17 @@ compinit
 alias ls=eza
 alias d='fzf-directory-browser'  # Directory browser with tree preview
 alias find='fd'
+
+# Eza Aliases
+alias ls='eza --long -a --header --icons --git --color=auto'
+alias ll='eza -al --header --icons --git --color=auto --group-directories-first'
+alias lt='eza --tree --level=2' # Tree view of directories up to level 2
+
+# Yazi
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
