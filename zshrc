@@ -169,6 +169,20 @@ alias ls='eza --long -a --header --icons --git --color=auto'
 alias ll='eza -al --header --icons --git --color=auto --group-directories-first'
 alias lt='eza --tree --level=2 --icons --color=auto' # Tree view of directories up to level 2
 
+# Tmux
+alias ta='tmux attach -t'
+alias ts='tmux new-session -s'
+alias tls='tmux list-sessions'
+alias tksv='tmux kill-server'
+alias tkss='tmux kill-session -t'
+
+
+# Neovim
+alias nv='nvim'
+alias vim='nvim'
+alias vi='nvim'
+
+
 # Yazi
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
@@ -177,3 +191,33 @@ function y() {
 	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
 	rm -f -- "$tmp"
 }
+
+# Alias fuzzy picker with bat syntax highlighting
+fzf-alias-picker() {
+    local selected
+    # Get all aliases, format as "alias_name=command" for better display
+    selected=$(alias | sed 's/^alias //' | \
+        fzf --prompt="🔍 Aliases: " \
+            --header="Press ENTER to execute alias, ESC to cancel" \
+            --ansi \
+            --preview 'echo "alias {}" | bat --color=always --language=bash --style=numbers --wrap=never' \
+            --preview-window=right:50%:wrap \
+            --bind 'enter:accept' \
+            --bind 'double-click:accept')
+    
+    if [[ -n "$selected" ]]; then
+        # Extract just the alias name (before the =)
+        local alias_name=$(echo "$selected" | cut -d'=' -f1)
+        # Remove quotes if present
+        alias_name=$(echo "$alias_name" | sed "s/^'//; s/'$//")
+        
+        # Add to buffer and execute
+        BUFFER="$alias_name "
+        CURSOR=$#BUFFER
+    fi
+    zle redisplay
+}
+
+# Bind Alt+A to alias picker
+zle -N fzf-alias-picker
+bindkey '^[a' fzf-alias-picker  # ^[a is Alt+A in zsh

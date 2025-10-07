@@ -285,7 +285,7 @@ install_fzf_from_git() {
 install_packages() {
     echo -e "${BLUE}=== Installing Required Packages ===${NC}"
     
-    local packages=("tmux" "bat" "tree" "eza" "fribidi" "yazi")
+    local packages=("tmux" "bat" "tree" "eza" "fribidi" "yazi", "neovim")
     
     for package in "${packages[@]}"; do
         install_package "$package"
